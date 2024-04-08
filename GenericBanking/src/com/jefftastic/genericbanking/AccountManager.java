@@ -1,12 +1,10 @@
 package com.jefftastic.genericbanking;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  *  Manages a list of accounts, in ways such as:<br>
+ *  - Withdrawing/depositing money into accounts<br>
  *  - Opening new bank accounts<br>
  *  - Closing existing bank accounts<br>
  *  - Searching through the list of accounts by name<br>
@@ -18,7 +16,8 @@ public class AccountManager {
     private final String[] manMesg = {
             """
             
-            Hello, to get started, please enter an option from below. (1-2)
+            Hello, to get started, please enter an option from below. (0-2)
+            
             [1] - Search and login
             [2] - Open account
             [0] - Close program
@@ -26,7 +25,8 @@ public class AccountManager {
             >""",
             """
             
-            Hello %s! Please enter an option from below. (1-5)
+            Hello %s! Please enter an option from below. (0-5)
+            
             [1] - Deposit funds
             [2] - Withdraw funds
             [3] - Account information
@@ -82,11 +82,11 @@ public class AccountManager {
          * Closes the program.
          */
         EXIT_PROGRAM
-
-    };
+    }
 
     // Declare class variables
     private List<Account> accounts = new ArrayList<>();
+    private Account currentAccount;
     private Scanner input = new Scanner(System.in);
     private AccessMode mode = AccessMode.LOGIN_IDLE;
 
@@ -112,6 +112,13 @@ public class AccountManager {
         // Declare variables
         int next;
 
+        // If we've got a current account, just switch
+        // to ACCOUNT_IDLE instead.
+        if (currentAccount != null) {
+            mode = AccessMode.ACCOUNT_IDLE;
+            return;
+        }
+
         // Print generic prompt and wait for response
         next = promptUserInt(manMesg[0], input);
         switch (next) {
@@ -125,30 +132,66 @@ public class AccountManager {
 
     private void loginSearchLoop() {
         // Declare variables
-        String next;
+        String nextStr;
+        int nextInt;
         List<Account> foundAccounts;
 
         // Prompt user for name and get accounts
-        next = promptUserLine("\nPlease input your full name here.\n", input);
-        foundAccounts = findAccount(next);
+        nextStr = promptUserLine("\nPlease input your full name here.\n>", input);
+        foundAccounts = findAccount(nextStr);
 
         // Now print accounts in a list and ask user to pick one
-        System.out.println("Heres the list of accounts that we found:\n");
+        System.out.println("Here is the list of accounts that we found:\n");
         for (int i = 0; i < foundAccounts.size(); i++) {
             Account acc = foundAccounts.get(i);
             System.out.printf(
-                    "[%d] %-30s %30s\n",
-                    i,
+                    "[%d] - %-30s %30s\n",
+                    i + 1,
                     acc.getName(),
                     acc.getAddress()
             );
         }
+        nextInt = promptUserInt("[0] - Exit\n\nSelect one from the list to proceed.\n>", input);
+
+        // Go back to LOGIN_IDLE and set current account if applicable
+        mode = AccessMode.LOGIN_IDLE;
+        if (nextInt != 0 && nextInt <= foundAccounts.size())
+            currentAccount = foundAccounts.get(nextInt - 1);
     }
 
     private void loginOpenAccountLoop() {
+        // Declare variables
+        Account acc;
+
+        // Open and confirm account
+        acc = openAndConfirmAccount();
+
+        // Add this to list, and set as current
+        accounts.add(acc);
+        currentAccount = acc;
+        mode = AccessMode.ACCOUNT_IDLE;
     }
 
     private void accountIdleLoop() {
+        // Declare variables
+        int next;
+
+        // If we DON'T have a current account, switch
+        // to LOGIN_IDLE instead.
+        if (currentAccount == null) {
+            mode = AccessMode.LOGIN_IDLE;
+            return;
+        }
+
+        // Print generic prompt and wait for response
+        next = promptUserInt(manMesg[1], input);
+        switch (next) {
+            case 1:     mode = AccessMode.LOGIN_SEARCH;                 break;
+            case 2:     mode = AccessMode.LOGIN_OPEN_ACCOUNT;           break;
+            default:
+                System.out.println("\nInvalid input, please try again.");
+                break;
+        }
     }
 
     private void accountDepositLoop() {
@@ -173,7 +216,7 @@ public class AccountManager {
      */
     public Account openAndConfirmAccount() {
         // Declare variables
-        Account newAccount = null;
+        Account newAccount;
 
         while (true) {
             // Run user through opening process
@@ -215,10 +258,10 @@ public class AccountManager {
 
         // Ask user for information
         while (inputName == null)
-            inputName = promptUserLine("\nWhat is your first and last name?\n", input);
+            inputName = promptUserLine("\nWhat is your first and last name?\n>", input);
 
         while (inputAddress == null)
-            inputAddress = promptUserLine("\nWhat is your address?\n", input);
+            inputAddress = promptUserLine("\nWhat is your address?\n>", input);
 
         while (Double.isNaN(inputBalance))
             inputBalance = promptUserDouble("\nHow many funds would you like to put in for your initial deposit?\n$", input);
@@ -245,19 +288,37 @@ public class AccountManager {
      * @return User's input as double
      */
     private double promptUserDouble(String prompt, Scanner in) {
+        // Declare variables
+        double result;
+
+        // Prompt and get input
         System.out.print(prompt);
-        return in.hasNextDouble() ? in.nextDouble() : Double.NaN;
+        try { result = in.nextDouble(); }
+        catch (InputMismatchException e) { return Double.NaN; }
+
+        // Clean buffer and return input
+        in.nextLine();
+        return result;
     }
 
     /**
-     * Prompts user with provided text and returns the input value as a integer.
+     * Prompts user with provided text and returns the input value as an integer.
      * @param prompt Prompt to print in console
      * @param in Scanner to pull input from
      * @return User's input as integer
      */
     private int promptUserInt(String prompt, Scanner in) {
+        // Declare variables
+        int result;
+
+        // Prompt and get input
         System.out.print(prompt);
-        return in.hasNextInt() ? in.nextInt() : Integer.MIN_VALUE;
+        try { result = in.nextInt(); }
+        catch (InputMismatchException e) { return Integer.MIN_VALUE; }
+
+        // Clean buffer and return input
+        in.nextLine();
+        return result;
     }
 
     /**

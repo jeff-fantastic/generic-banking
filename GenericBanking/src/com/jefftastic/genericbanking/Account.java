@@ -39,4 +39,12 @@ public class Account {
      * @return The current balance of this account
      */
     public double getBalance() {return this.balance;}
+
+    /**
+     * Sets the balance of this account.
+     * @param newBalance The new balance.
+     */
+    public void setBalance(double newBalance) {
+        this.balance = newBalance;
+    }
 }
