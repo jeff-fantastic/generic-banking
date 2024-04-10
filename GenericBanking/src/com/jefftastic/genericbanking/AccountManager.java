@@ -30,8 +30,8 @@ public class AccountManager {
             [1] - Deposit funds
             [2] - Withdraw funds
             [3] - Account information
-            [4] - Close this account
-            [5] - Log-out
+            [4] - Log-out
+            [5] - Close this account
             [0] - Close program
             
             >""",
@@ -74,6 +74,10 @@ public class AccountManager {
          */
         ACCOUNT_INFO,
         /**
+         * Logs user out of their account.
+         */
+        ACCOUNT_LOGOUT,
+        /**
          * Closes the current account, removing it from
          * the existing list of accounts
          */
@@ -102,6 +106,7 @@ public class AccountManager {
             case ACCOUNT_DEPOSIT:       accountDepositLoop();           break;
             case ACCOUNT_WITHDRAW:      accountWithdrawLoop();          break;
             case ACCOUNT_INFO:          accountInfoLoop();              break;
+            case ACCOUNT_LOGOUT:        accountLogoutLoop();            break;
             case ACCOUNT_CLOSE:         accountCloseLoop();             break;
             case EXIT_PROGRAM:          return -1;
         }
@@ -122,10 +127,11 @@ public class AccountManager {
         // Print generic prompt and wait for response
         next = promptUserInt(manMesg[0], input);
         switch (next) {
+            case 0:     mode = AccessMode.EXIT_PROGRAM;                 break;
             case 1:     mode = AccessMode.LOGIN_SEARCH;                 break;
             case 2:     mode = AccessMode.LOGIN_OPEN_ACCOUNT;           break;
             default:
-                System.out.println("\nInvalid input, please try again.");
+                System.out.println("\nInvalid input, please try again.\n");
                 break;
         }
     }
@@ -184,28 +190,82 @@ public class AccountManager {
         }
 
         // Print generic prompt and wait for response
-        next = promptUserInt(manMesg[1], input);
+        next = promptUserInt(manMesg[1].formatted(currentAccount.getName()), input);
         switch (next) {
-            case 1:     mode = AccessMode.LOGIN_SEARCH;                 break;
-            case 2:     mode = AccessMode.LOGIN_OPEN_ACCOUNT;           break;
+            case 0:     mode = AccessMode.EXIT_PROGRAM;                 break;
+            case 1:     mode = AccessMode.ACCOUNT_DEPOSIT;              break;
+            case 2:     mode = AccessMode.ACCOUNT_WITHDRAW;             break;
+            case 3:     mode = AccessMode.ACCOUNT_INFO;                 break;
+            case 4:     mode = AccessMode.ACCOUNT_LOGOUT;               break;
+            case 5:     mode = AccessMode.ACCOUNT_CLOSE;                break;
             default:
-                System.out.println("\nInvalid input, please try again.");
+                System.out.println("\nInvalid input, please try again.\n");
                 break;
         }
     }
 
     private void accountDepositLoop() {
+        // Ask for deposit amount
+        double amount = promptUserDouble("\nHow much would you like to deposit?\n$", input);
+
+        // Deposit amount and continue
+        currentAccount.setBalance(currentAccount.getBalance() + amount);
+        mode = AccessMode.ACCOUNT_IDLE;
     }
 
     private void accountWithdrawLoop() {
+        // Ask for withdraw amount
+        double amount = promptUserDouble("\nHow much would you like to withdraw?\n$", input);
+        double target = currentAccount.getBalance() - amount;
+
+        // Prompt again if it goes into the negatives
+        if (target < 0.0d) {
+            String confirmation = promptUserLine("""
+                    Are you sure you wish to withdraw %.2f?
+                    This transaction can put your account into the negatives. (Y/N)
+                    >""".formatted(amount),
+                    input
+            );
+            if (!confirmation.toLowerCase(Locale.ROOT).equals("y")) {
+                mode = AccessMode.ACCOUNT_IDLE;
+                return;
+            }
+        }
+
+        // Deposit amount and continue
+        currentAccount.setBalance(target);
+        mode = AccessMode.ACCOUNT_IDLE;
     }
 
     private void accountInfoLoop() {
     }
 
-    private void accountCloseLoop() {
+    private void accountLogoutLoop() {
+        // Ask again
+        String response = promptUserLine("Are you sure you wish to log out? (Y/N)\n>", input);
+        if (response.toLowerCase(Locale.ROOT).equals("y")) {
+            // Logout
+            currentAccount = null;
+            mode = AccessMode.LOGIN_IDLE;
+        }
     }
 
+    private void accountCloseLoop() {
+        // Ask again
+        String response = promptUserLine(
+                "Are you SURE you wish to close your account? (Y/N)\n>",
+                input
+        );
+        if (response.toLowerCase(Locale.ROOT).equals("y")) {
+            // Find the account in list, then remove
+            int index = findAccountID(currentAccount);
+            accounts.remove(index);
+
+            // Now logout
+            currentAccount = null;
+            mode = AccessMode.LOGIN_IDLE;
+        }
+    }
 
     /**
      * Guides the user through the entire process of opening an account
@@ -324,7 +384,7 @@ public class AccountManager {
     /**
      * Provides a list of accounts in this manager's
      * list based on the provided name
-     * @param name The name that is being searched for.
+     * @param name The name that is being searched for
      * @return The found account
      */
     private List<Account> findAccount(String name) {
@@ -338,5 +398,21 @@ public class AccountManager {
         }
 
         return foundAccounts;
+    }
+
+    /**
+     * Returns the first position of a given account
+     * reference from this manager's list of accounts.
+     * If no account is found, -1 is returned indicating
+     * that the reference could not be located.
+     * @param ref Reference to account to find
+     * @return The first position of the given account reference
+     */
+    private int findAccountID(Account ref) {
+        for (int i = 0; i < accounts.size(); i++)
+            if (accounts.get(i).hashCode() == ref.hashCode()) {
+                return i;
+            }
+        return -1;
     }
 }
