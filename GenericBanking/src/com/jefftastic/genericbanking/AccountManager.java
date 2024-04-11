@@ -20,18 +20,24 @@ public class AccountManager {
             
             [1] - Search and login
             [2] - Open account
+            
             [0] - Close program
             
             >""",
             """
             
-            Hello %s! Please enter an option from below. (0-5)
+            Hello %s! You currently have $%0.2f.
+            Please enter an option from below. (0-5)
             
+            Fund Management
             [1] - Deposit funds
             [2] - Withdraw funds
+            
+            Account Settings
             [3] - Account information
             [4] - Log-out
             [5] - Close this account
+            
             [0] - Close program
             
             >""",
@@ -190,7 +196,8 @@ public class AccountManager {
         }
 
         // Print generic prompt and wait for response
-        next = promptUserInt(manMesg[1].formatted(currentAccount.getName()), input);
+        next = promptUserInt(manMesg[1].formatted(
+                currentAccount.getName(), currentAccount.getBalance()), input);
         switch (next) {
             case 0:     mode = AccessMode.EXIT_PROGRAM;                 break;
             case 1:     mode = AccessMode.ACCOUNT_DEPOSIT;              break;
@@ -354,7 +361,10 @@ public class AccountManager {
         // Prompt and get input
         System.out.print(prompt);
         try { result = in.nextDouble(); }
-        catch (InputMismatchException e) { return Double.NaN; }
+        catch (InputMismatchException e) {
+            in.nextLine();
+            return Double.NaN;
+        }
 
         // Clean buffer and return input
         in.nextLine();
@@ -374,7 +384,10 @@ public class AccountManager {
         // Prompt and get input
         System.out.print(prompt);
         try { result = in.nextInt(); }
-        catch (InputMismatchException e) { return Integer.MIN_VALUE; }
+        catch (InputMismatchException e) {
+            in.nextLine();
+            return Integer.MIN_VALUE;
+        }
 
         // Clean buffer and return input
         in.nextLine();
