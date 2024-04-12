@@ -1,11 +1,8 @@
 package com.jefftastic.genericbanking;
 
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
+import com.opencsv.*;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +12,8 @@ import java.util.List;
  * through during instantiation.
  */
 public class Database {
+    // Constants
+    public final String DEFAULT_PATH = "." + File.separator + "adb.csv";
 
     /**
      * Constructs the account list from a CSV file.
@@ -47,7 +46,7 @@ public class Database {
     /**
      * Reads a CSV file.
      * @param file The filepath to retrieve values from
-     * @throws Exception
+     * @throws Exception File not found
      * @return A list containing arrays of each line's values.
      */
     public static List<String[]> readCSV(File file) throws Exception {
@@ -58,7 +57,8 @@ public class Database {
 
         try {
             // Initialize reader and iterate
-            reader = new CSVReaderBuilder(new FileReader(file)).build();
+            reader = new CSVReaderBuilder(new FileReader(file)).withCSVParser(
+                    new CSVParserBuilder().withSeparator(';').build()).build();
             while ((line = reader.readNext()) != null)
                 result.add(line);
 
@@ -68,6 +68,7 @@ public class Database {
                     Could not find file at path "%s".
                     Please verify that a file exists at this path.
                     """);
+            e.printStackTrace(System.out);
         } finally {
             // Close reader
             if (reader != null)
@@ -75,5 +76,31 @@ public class Database {
         }
 
         return result;
+    }
+
+    /**
+     * Converts an account list into a CSV file.
+     * @param aDB List of accounts
+     * @see AccountManager
+     */
+    public static void saveCSV(List<Account> aDB, String path) {
+        // Declare variables
+        File CSV = new File("." + File.separator + "adb.csv");
+
+        // Iterate through new file
+        try (FileWriter fw = new FileWriter(CSV)) {
+            for (Account acc : aDB)
+                fw.write("%s;%s;%f\n".formatted(
+                        acc.getName(), acc.getAddress(), acc.getBalance()
+                ));
+            fw.flush();
+        } catch (IOException e) {
+            // Print error
+            System.out.println("""
+                    Could not translate ADB to CSV file!
+                    Something must've gone horribly wrong...
+                    """);
+            e.printStackTrace(System.out);
+        }
     }
 }
