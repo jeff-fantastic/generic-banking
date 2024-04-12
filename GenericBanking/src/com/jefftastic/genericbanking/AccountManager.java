@@ -26,7 +26,7 @@ public class AccountManager {
             >""",
             """
             
-            Hello %s! You currently have $%0.2f.
+            Hello %s! You currently have $%.2f.
             Please enter an option from below. (0-5)
             
             Fund Management
@@ -99,6 +99,19 @@ public class AccountManager {
     private Account currentAccount;
     private Scanner input = new Scanner(System.in);
     private AccessMode mode = AccessMode.LOGIN_IDLE;
+
+    /**
+     * Account manager constructor.
+     * @param accounts Account list to initialize with
+     */
+    public AccountManager(List<Account> accounts) {
+        this.accounts = accounts;
+    }
+
+    /**
+     * Account manager constructor.
+     */
+    public AccountManager() {}
 
     /**
      * Main update loop.
@@ -245,6 +258,20 @@ public class AccountManager {
     }
 
     private void accountInfoLoop() {
+        // Print account information
+        System.out.printf("""
+            
+            Name    %30s
+            Address %30s
+            Funds   %30s
+            """,
+            currentAccount.getName(),
+            currentAccount.getAddress(),
+            currentAccount.getBalance()
+        );
+
+        // Go back to normal screen
+        mode = AccessMode.ACCOUNT_IDLE;
     }
 
     private void accountLogoutLoop() {
@@ -428,4 +455,9 @@ public class AccountManager {
             }
         return -1;
     }
+
+    /**
+     * @return This manager's account list
+     */
+    public List<Account> getAccounts() { return this.accounts; }
 }

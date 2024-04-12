@@ -1,11 +1,11 @@
 package com.jefftastic.genericbanking;
 
 /**
- *  Holds information about an account, such as:
- *  - First Name
- *  - Last Name
- *  - Address
- *  - and Balance
+ *  Holds information about an account, such as:<br>
+ *  - First Name<br>
+ *  - Last Name<br>
+ *  - Address<br>
+ *  - and Balance<br>
  */
 
 public class Account {

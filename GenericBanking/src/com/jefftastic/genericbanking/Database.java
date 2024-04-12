@@ -13,13 +13,12 @@ import java.util.List;
  */
 public class Database {
     // Constants
-    public final String DEFAULT_PATH = "." + File.separator + "adb.csv";
+    public static final String DEFAULT_PATH = "." + File.separator + "adb.csv";
 
     /**
      * Constructs the account list from a CSV file.
      * @param file The filepath to retrieve values from
      * @return The list of accounts constructed from the CSV file
-     * @throws Exception
      * @see AccountManager
      */
     public static List<Account> constructAccountList(File file) throws Exception {
@@ -46,7 +45,6 @@ public class Database {
     /**
      * Reads a CSV file.
      * @param file The filepath to retrieve values from
-     * @throws Exception File not found
      * @return A list containing arrays of each line's values.
      */
     public static List<String[]> readCSV(File file) throws Exception {
@@ -85,7 +83,7 @@ public class Database {
      */
     public static void saveCSV(List<Account> aDB, String path) {
         // Declare variables
-        File CSV = new File("." + File.separator + "adb.csv");
+        File CSV = new File(path);
 
         // Iterate through new file
         try (FileWriter fw = new FileWriter(CSV)) {
